@@ -1,0 +1,6 @@
+<section>
+      <.table id="users" rows={@nodes}>
+        <:col :let={{node, _}} label="id"><%= node %></:col>
+        <:col :let={{_, info}} label="username"><%= Jason.encode!(info) %></:col>
+      </.table>
+</section>
