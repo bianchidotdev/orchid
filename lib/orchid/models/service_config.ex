@@ -1,8 +1,7 @@
-defmodule Orchid.ServiceConfig do
+defmodule Orchid.Models.ServiceConfig do
   defstruct [source: nil, controller: Orchid.Docker.Controllers, name: nil, desired_state: nil]
 
-  def new(source) do
-    # TODO: read from source
+  def load(source) do
     %__MODULE__{source: source}
   end
 

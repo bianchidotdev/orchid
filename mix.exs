@@ -52,10 +52,12 @@ defmodule Orchid.MixProject do
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.20"},
+      {:git_cli, "~> 0.3"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
       {:req, "~> 0.4"},
+      {:vapor, "~> 0.10"},
       {:yaml_elixir, "~> 2.9"},
       {:local_cluster, "~> 1.2", only: [:test]},
     ]

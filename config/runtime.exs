@@ -20,6 +20,9 @@ if System.get_env("PHX_SERVER") do
   config :orchid, OrchidWeb.Endpoint, server: true
 end
 
+config :orchid,
+  local_repo_storage_path: System.get_env("ORCHID_REPO_STORAGE_PATH", "/tmp/orchid")
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

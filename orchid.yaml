@@ -1,0 +1,15 @@
+
+type: cluster
+version: v0.1
+spec:
+  name: orchid
+  provider: docker
+  nodes:
+  - localhost
+
+---
+
+type: service
+version: v0.1
+spec:
+  name: orchid-service

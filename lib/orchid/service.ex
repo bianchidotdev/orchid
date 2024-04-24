@@ -3,6 +3,14 @@ defmodule Orchid.Service do
   #   :image
   # ]
 
+  def sync(service_config) do
+    service = Orchid.Models.ServiceConfig.load(service_config)
+    case reconcile(service) do
+      {:ok, _} -> {:ok, "Service synced"}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   def reconcile(config) do
     case config.controller.get_service(config) do
       {:ok, :not_found} -> create_service(config)
@@ -16,7 +24,7 @@ defmodule Orchid.Service do
   end
 
   def update_service(config, current) do
-    {:ok, diffs} = Orchid.ServiceConfig.diff(config, current)
+    {:ok, diffs} = Orchid.Models.ServiceConfig.diff(config, current)
     Enum.any?(diffs, Enum)
     case Enum.any?(diffs) do
       true -> :ok # TODO: update service
