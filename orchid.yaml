@@ -7,16 +7,17 @@ spec:
   nodes:
   - localhost
   # not needed if services are in-lined
-  service_specs:
+  service_sources:
   - type: git
     url: https://git.bianchi.dev/orchid_test
 
 ---
 
+# TODO: put name in metadata?
+name: orchid-service
 type: service
 version: v0.1
 spec:
-  name: orchid-service
   # NOTE: these will not actually be deployed as a pod, but rather are forced to be on a single node
   containers:
   - name: busybox

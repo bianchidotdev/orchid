@@ -1,21 +1,26 @@
 defmodule Orchid.Cluster do
-  alias Orchid.Models.ClusterConfig
-  alias Orchid.Source
+  require Logger
+
+  alias Orchid.Models.{ClusterConfig,ServiceConfig}
+  alias Orchid.{Source,Service}
 
   def sync() do
-    source_props = %{
+    # TODO: fix this way up
+    source = %Source{
       type: Application.get_env(:orchid, :cluster_config_source_type),
       url: Application.get_env(:orchid, :cluster_config_source_url)
     }
-    {:ok, source} = Source.fetch(source_props)
-    {:ok, {cluster_config, service_configs}} = Source.parse()
-    {:ok, cluster_config} = ClusterConfig.load(source)
-    if ClusterConfig.valid?(cluster_config) do
-      #
-    else
-      {:error, "Invalid cluster config"}
-    end
+    {:ok, source_data} = Source.fetch(source)
+    {:ok, {cluster_config, service_configs}} = Source.parse(source_data)
+    cluster = ClusterConfig.new(cluster_config)
+    |> Map.put(:source, source)
+    services = service_configs
+    |> Enum.map(&(ServiceConfig.new(cluster, &1)))
+    |> dbg()
+    |> Enum.filter(&ServiceConfig.valid?/1)
 
-    Task.async_stream(cluster_config.services, &Orchid.Service.sync/1)
+    # TODO: switch to a dynamic supervisor
+    Task.async_stream(services, &(Service.sync(&1)))
+    |> Enum.to_list()
   end
 end

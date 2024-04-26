@@ -3,8 +3,7 @@ defmodule Orchid.Service do
   #   :image
   # ]
 
-  def sync(service_config) do
-    service = Orchid.Models.ServiceConfig.load(service_config)
+  def sync(%{} = service) do
     case reconcile(service) do
       {:ok, _} -> {:ok, "Service synced"}
       {:error, reason} -> {:error, reason}

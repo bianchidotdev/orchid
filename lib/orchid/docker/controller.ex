@@ -8,6 +8,7 @@ defmodule Orchid.Docker.Controller do
     {:ok, resp.body}
   end
 
+  # TODO: figure out interface - this can and will run multiple containers
   def create_service(config) do
     # probably do some parsing and mutations here to get docker specific config
     with {:ok, _} <- Controller.Image.create_image(config.image),
@@ -18,8 +19,9 @@ defmodule Orchid.Docker.Controller do
     end
   end
 
-  def get_service() do
-    %{}
+  def get_service(%{name: name}) do
+    # TODO: figure out interface, this can and will return multiple containers
+    Controller.Container.list_all(filters: %{label: ["orchid.service=#{name}"]})
   end
 
   def client() do
