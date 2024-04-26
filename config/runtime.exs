@@ -21,6 +21,8 @@ if System.get_env("PHX_SERVER") do
 end
 
 config :orchid,
+  cluster_config_source_url: System.get_env("ORCHID_CLUSTER_CONFIG_SOURCE_URL", "./"),
+  cluster_config_source_type: System.get_env("ORCHID_CLUSTER_CONFIG_SOURCE_TYPE", "local"),
   local_repo_storage_path: System.get_env("ORCHID_REPO_STORAGE_PATH", "/tmp/orchid")
 
 if config_env() == :prod do

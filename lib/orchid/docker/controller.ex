@@ -23,6 +23,7 @@ defmodule Orchid.Docker.Controller do
   end
 
   def client() do
+    # TODO: make configurable
     # Req.new(base_url: "http://oci", unix_socket: "/var/run/docker.sock")
     Req.new(base_url: "http://localhost:2376")
     |> Req.Request.append_response_steps(
@@ -34,7 +35,7 @@ defmodule Orchid.Docker.Controller do
     case resp.status do
       status when status in 200..299 -> {:ok, resp}
       status when status in 400..599 -> {:error, resp.body}
-      true -> {:error, "Unknown error"}
+      true -> {:error, "Unknown response status: #{resp.status}"}
     end
   end
 

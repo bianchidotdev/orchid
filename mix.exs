@@ -57,7 +57,6 @@ defmodule Orchid.MixProject do
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
       {:req, "~> 0.4"},
-      {:vapor, "~> 0.10"},
       {:yaml_elixir, "~> 2.9"},
       {:local_cluster, "~> 1.2", only: [:test]},
     ]
