@@ -13,6 +13,9 @@ defmodule Orchid.Application do
       {Phoenix.PubSub, name: Orchid.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: Orchid.Finch},
+      # start a globally unique scheduler
+      {Highlander, Orchid.Scheduler},
+      # {DynamicSupervisor, name: Orchid.ServiceSupervisor, strategy: :one_for_one},
       # Start a worker by calling: Orchid.Worker.start_link(arg)
       # {Orchid.Worker, arg},
       # Start to serve requests, typically the last entry

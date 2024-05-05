@@ -6,7 +6,7 @@ defmodule Orchid.Docker.Controller.Container do
 
   ### Container Management
 
-  def create(config = %Orchid.Docker.Models.Container{}, _docker_opts \\ %{}) do
+  def create(config = %OrchidSchema.Container{}, _docker_opts \\ %{}) do
     body =
       Orchid.Docker.Models.Container.dump(config)
       |> Map.merge(%{Labels: %{"orchid.managed" => "true", "orchid.service" => config.name}})
@@ -18,6 +18,7 @@ defmodule Orchid.Docker.Controller.Container do
         json: body
       )
 
+    # TODO: return container ID
     Controller.handle_resp(resp)
   end
 
@@ -62,7 +63,14 @@ defmodule Orchid.Docker.Controller.Container do
 
     {:ok, resp} = Req.get(Controller.client(), url: "containers/json", params: query_opts)
     {:ok, %{body: containers}} = Controller.handle_resp(resp)
-    Enum.map(containers, &Orchid.Docker.Models.Container.parse/1)
+    containers_with_details = Enum.map(containers, &(inspect_container(&1["Id"])))
+    Enum.map(containers_with_details, &Orchid.Docker.Models.Container.parse_from_inspect/1)
+  end
+
+  def inspect_container(container_id) do
+    {:ok, resp} = Req.get(Controller.client(), url: "/containers/#{container_id}/json")
+    {:ok, %{body: container}} = Controller.handle_resp(resp)
+    container
   end
 
   ### Additional calls
@@ -79,6 +87,7 @@ defmodule Orchid.Docker.Controller.Container do
   """
   def logs(container_id, opts) do
     opts = Keyword.merge([stdout: true, stderr: true, timestamps: true], opts)
+
     {:ok, resp} =
       Req.get(Controller.client(),
         url: "/containers/#{container_id}/logs",

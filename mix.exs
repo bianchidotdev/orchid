@@ -19,7 +19,7 @@ defmodule Orchid.MixProject do
   def application do
     [
       mod: {Orchid.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :os_mon]
     ]
   end
 
@@ -56,9 +56,12 @@ defmodule Orchid.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.2"},
+      {:boundary, "~> 0.10.3"},
+      {:ecto, "~> 3.11"},
+      {:highlander, "~> 0.2"},
       {:req, "~> 0.4"},
       {:yaml_elixir, "~> 2.9"},
-      {:local_cluster, "~> 1.2", only: [:test]},
+      {:local_cluster, "~> 1.2", only: [:test]}
     ]
   end
 

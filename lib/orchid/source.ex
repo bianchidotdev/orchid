@@ -1,25 +1,12 @@
 defmodule Orchid.Source do
-  defstruct [
-    type: nil,
-    url: nil,
-    path: "/",
-    git_ref: "main",
-    interval: 60_000
-  ]
-
-  # check for `orchid.yml`, `orchid.yaml`
-  @base_filenames ~w(orchid)a
-  @file_types ~w(yml yaml)a
-
   require Logger
 
-
-  def fetch(%{type: "local"} = source) do
+  def fetch(%{type: "file"} = source) do
     url = Path.expand(source.url)
+
     with true <- File.dir?(url),
-    path = Path.join(url, source.path),
-    {:ok, config_path} <- find_config(path),
-    {:ok, config} <- read_config(config_path, format(config_path)) do
+         path = Path.join(url, source.path),
+         {:ok, config} <- read_config(path, format(path)) do
       {:ok, config}
     else
       false -> {:error, "URL is not a directory"}
@@ -29,9 +16,8 @@ defmodule Orchid.Source do
 
   def fetch(%{type: "git"} = source) do
     with {:ok, repo} <- fetch_repo(source),
-      path = Path.join(repo.path, source.path),
-      {:ok, config_path} <- find_config(path),
-      {:ok, config} <- read_config(config_path, format(config_path)) do
+         path = Path.join(repo.path, source.path),
+         {:ok, config} <- read_config(path, format(path)) do
       {:ok, config}
     else
       error -> error
@@ -41,6 +27,7 @@ defmodule Orchid.Source do
   def parse(configs) do
     cluster_configs = Enum.filter(configs, fn config_map -> config_map["type"] == "cluster" end)
     service_configs = Enum.filter(configs, fn config_map -> config_map["type"] == "service" end)
+
     case cluster_configs do
       [] -> {:error, "No cluster config found"}
       [cluster_config] -> {:ok, {cluster_config, service_configs}}
@@ -48,14 +35,14 @@ defmodule Orchid.Source do
     end
   end
 
-  defp find_config(path) do
-    possible_file_list = for base <- @base_filenames, type <- @file_types, do: Path.join(path, "#{base}.#{type}")
+  # defp find_config(path) do
+  #   possible_file_list = for base <- @base_filenames, type <- @file_types, do: Path.join(path, "#{base}.#{type}")
 
-    case Enum.find(possible_file_list, &File.exists?/1) do
-      nil -> {:error, "No valid config file found"}
-      file -> {:ok, file}
-    end
-  end
+  #   case Enum.find(possible_file_list, &File.exists?/1) do
+  #     nil -> {:error, "No valid config file found"}
+  #     file -> {:ok, file}
+  #   end
+  # end
 
   defp read_config(path, :yaml), do: YamlElixir.read_all_from_file(path)
 
@@ -79,17 +66,24 @@ defmodule Orchid.Source do
   # TODO: handle local repo?
   defp update_repo(source) do
     reference_url = source.url
+
     with repo <- Git.new(local_path(source.url)),
-      {:ok, _} <- Git.rev_parse(repo, ["--is-inside-work-tree"]),
-      # I don't know why a string trim is needed - also unsure if this is a reasonable check
-      {:ok, remote_url} <- Git.remote(repo, ["get-url", "origin"]),
-      ^reference_url <- String.trim(remote_url),
-      {:ok, _} <- fetch_and_reset_to_ref(repo, source.git_ref) do
+         {:ok, _} <- Git.rev_parse(repo, ["--is-inside-work-tree"]),
+         # I don't know why a string trim is needed - also unsure if this is a reasonable check
+         {:ok, remote_url} <- Git.remote(repo, ["get-url", "origin"]),
+         ^reference_url <- String.trim(remote_url),
+         {:ok, _} <- fetch_and_reset_to_ref(repo, source.git_ref) do
       {:ok, repo}
     else
-      {:ok, output} -> Logger.warning("Unexpected output: #{output}") && {:error, "Unexpected output"}
-      {:error, error} -> {:error, error}
-      url -> Logger.warning("Remote URL mismatch: expected: #{reference_url}, got: #{url}") && {:error, "Remote URL mismatch"}
+      {:ok, output} ->
+        Logger.warning("Unexpected output: #{output}") && {:error, "Unexpected output"}
+
+      {:error, error} ->
+        {:error, error}
+
+      url ->
+        Logger.warning("Remote URL mismatch: expected: #{reference_url}, got: #{url}") &&
+          {:error, "Remote URL mismatch"}
     end
   end
 
@@ -99,8 +93,8 @@ defmodule Orchid.Source do
 
   defp clone_repo(%{url: url, git_ref: git_ref}) do
     with {:ok, repo} <- Git.clone(["--depth=1", url, local_path(url)]),
-      {:ok, _} <- fetch_and_reset_to_ref(repo, git_ref) do
-        {:ok, repo}
+         {:ok, _} <- fetch_and_reset_to_ref(repo, git_ref) do
+      {:ok, repo}
     else
       error -> error
     end
@@ -108,8 +102,9 @@ defmodule Orchid.Source do
 
   defp fetch_and_reset_to_ref(repo, ref) do
     Logger.info("Updating repo to ref: #{ref}")
+
     with {:ok, _} <- Git.fetch(repo, ["origin", ref]),
-      {:ok, _} <- Git.reset(repo, ["--hard", ref]) do
+         {:ok, _} <- Git.reset(repo, ["--hard", ref]) do
       {:ok, repo}
     else
       error -> error

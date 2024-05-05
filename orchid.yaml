@@ -1,15 +1,14 @@
 
 type: cluster
 version: v0.1
-spec:
-  name: orchid
-  provider: docker
-  nodes:
-  - localhost
-  # not needed if services are in-lined
-  service_sources:
-  - type: git
-    url: https://git.bianchi.dev/orchid_test
+name: orchid
+controller: docker
+nodes:
+- localhost
+# not needed if this is the only source file
+sources:
+- type: git
+  url: https://git.bianchi.dev/orchid_test
 
 ---
 
@@ -17,9 +16,8 @@ spec:
 name: orchid-service
 type: service
 version: v0.1
-spec:
   # NOTE: these will not actually be deployed as a pod, but rather are forced to be on a single node
-  containers:
-  - name: busybox
-    image: busybox
-    command: ["sleep", "3600"]
+containers:
+- name: busybox
+  image: busybox
+  command: ["sleep", "3600"]

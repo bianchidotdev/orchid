@@ -10,12 +10,12 @@ defmodule Orchid.Docker.Controller do
 
   # TODO: figure out interface - this can and will run multiple containers
   def create_service(config) do
-    # probably do some parsing and mutations here to get docker specific config
+    # TODO: probably do some parsing and mutations here to get docker specific config
     with {:ok, _} <- Controller.Image.create_image(config.image),
-      {:ok, resp} <- Controller.Container.create(config) do
-        {:ok, resp}
-      else
-        err -> err
+         {:ok, resp} <- Controller.Container.create(config) do
+      {:ok, resp}
+    else
+      err -> err
     end
   end
 

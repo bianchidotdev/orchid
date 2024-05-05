@@ -1,39 +1,38 @@
 defmodule Orchid.Docker.Models.Container do
-  defstruct id: nil,
-            image: nil,
-            name: nil,
-            env: nil,
-            user: nil,
-            working_dir: nil,
-            entrypoint: nil,
-            command: nil,
-            state: nil,
-            status: nil,
-            ports: nil,
-            mounts: nil,
-            network_settings: nil,
-            labels: nil,
-            created: nil
-
+  use Ecto.Schema
   # TODO: make this so much less manual
   def parse(container) do
-    %__MODULE__{
+    struct(OrchidSchema.Container, %{
       id: container["Id"],
       image: container["Image"],
       name: container["Names"],
-      env: container["Env"],
-      user: container["User"],
-      working_dir: container["WorkingDir"],
-      entrypoint: container["Entrypoint"],
-      command: container["Cmd"],
+      command: container["Command"],
       state: container["State"],
       status: container["Status"],
       ports: container["Ports"],
       mounts: container["Mounts"],
-      network_settings: container["NetworkSettings"],
       labels: container["Labels"],
-      created: container["Created"]
-    }
+      created_at: container["Created"]
+    })
+  end
+
+  def parse_from_inspect(container) do
+    dbg()
+    struct(OrchidSchema.Container, %{
+      id: container["Id"],
+      image: container["Config"]["Image"],
+      name: container["Name"],
+      env: container["Config"]["Env"],
+      working_dir: container["Config"]["WorkingDir"],
+      entrypoint: container["Config"]["Entrypoint"],
+      command: container["Config"]["Cmd"],
+      state: container["State"]["Status"],
+      status: container["State"]["Status"],
+      ports: container["NetworkSettings"]["Ports"],
+      mounts: container["Mounts"],
+      labels: container["Config"]["Labels"],
+      created_at: container["Created"]
+    })
   end
 
   # used for POSTs to docker engine
@@ -42,8 +41,6 @@ defmodule Orchid.Docker.Models.Container do
       "Image" => config.image,
       "Names" => config.name,
       "Env" => config.env,
-      "User" => config.user,
-      "WorkingDir" => config.working_dir,
       "Entrypoint" => config.entrypoint,
       "Cmd" => config.command,
       "Ports" => config.ports,

@@ -8,7 +8,8 @@
 import Config
 
 config :orchid,
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime],
+  ash_domains: [Orchid]
 
 # Configures the endpoint
 config :orchid, OrchidWeb.Endpoint,
