@@ -1,23 +1,18 @@
 defmodule Orchid.Service do
-  defstruct source: nil,
-            controller: Orchid.Docker.Controller,
-            name: nil,
-            containers: []
+  # def create_service(service_config) do
+  #   %OrchidSchema.Service{}
+  #   |> OrchidSchema.Service.changeset(service_config)
+  #   |> Ecto.Changeset.apply_action(:insert)
+  #   # |> Orchid.Repo.insert()
+  #   |> case do
+  #     # TODO: handle persistence and pass only service name/id
+  #     {:ok, service} -> Phoenix.PubSub.broadcast(Orchid.PubSub, "service_creation", service)
+  #     {:error, changeset} -> {:error, changeset}
+  #   end
+  # end
 
-  # @require_deploy [
-  #   :image
-  # ]
-
-  def create_service(service_config) do
-    %OrchidSchema.Service{}
-    |> OrchidSchema.Service.changeset(service_config)
-    |> Ecto.Changeset.apply_action(:insert)
-    # |> Orchid.Repo.insert()
-    |> case do
-      # TODO: handle persistence and pass only service name/id
-      {:ok, service} -> Phoenix.PubSub.broadcast(Orchid.PubSub, "service_creation", service)
-      {:error, changeset} -> {:error, changeset}
-    end
+  def create_service(%OrchidSchema.Service{} = service) do
+    service.controller.create_service(service)
   end
 
   # def sync(%{} = service) do

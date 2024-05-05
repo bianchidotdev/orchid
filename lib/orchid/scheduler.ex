@@ -8,7 +8,7 @@ defmodule Orchid.Scheduler do
   end
 
   @impl true
-  def init(cluster_source) do
+  def init(_cluster_source) do
     # synchronously load the cluster to ensure it's configured properly
     # {:ok, {cluster, services}} = Orchid.Cluster.load(cluster_source)
     # TODO: start up dynamic source syncers
@@ -25,18 +25,36 @@ defmodule Orchid.Scheduler do
   # end
 
   @impl true
-  def handle_info({:cluster_reload, source}, state) do
+  def handle_info({:cluster_reload, source}, _state) do
     Logger.info("Reloading cluster from #{source}")
   end
 
-  def handle_info({:service_source_reload, source}, state) do
+  @impl true
+  def handle_info({:service_source_reload, source}, _state) do
     Logger.info("Reloading services from #{source}")
   end
 
+  @impl true
   def handle_info(:sync_services, _state) do
-    nodes = NodeManager.get_nodes()
-    node_info = Enum.map(nodes, fn node -> Orchid.Node.get_info(node) end)
-
     Logger.info("Syncing services")
+    # triggers deployments
+
+  end
+
+  @impl true
+  def handle_info({:deploy_service, service}, state) do
+    Logger.info("Deploying services")
+
+    target_nodes = Orchid.Node.get_nodes()
+    |> Enum.filter(&(Orchid.Node.capable?(&1, service)))
+    |> Enum.sort_by(&(Map.get(&1, :score)), :desc)
+    |> Stream.cycle()
+    |> Stream.take(service.count)
+
+    Enum.map(target_nodes, fn node ->
+      Orchid.Node.deploy_service(node, service)
+    end)
+
+    {:noreply, state}
   end
 end

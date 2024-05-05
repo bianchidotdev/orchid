@@ -19,7 +19,7 @@ defmodule Orchid.MixProject do
   def application do
     [
       mod: {Orchid.Application, []},
-      extra_applications: [:logger, :runtime_tools, :os_mon]
+      extra_applications: [:mnesia, :logger, :runtime_tools, :os_mon]
     ]
   end
 
@@ -55,6 +55,9 @@ defmodule Orchid.MixProject do
       {:git_cli, "~> 0.3"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
+
+      {:ash, "~> 3.0.0-rc"},
+      {:ash_state_machine, "~> 0.2.3-rc.1"},
       {:bandit, "~> 1.2"},
       {:boundary, "~> 0.10.3"},
       {:ecto, "~> 3.11"},

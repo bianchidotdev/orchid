@@ -7,6 +7,8 @@ defmodule Orchid.Application do
 
   @impl true
   def start(_type, _args) do
+    Ash.DataLayer.Mnesia.start(Orchid)
+
     children = [
       OrchidWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:orchid, :dns_cluster_query) || :ignore},

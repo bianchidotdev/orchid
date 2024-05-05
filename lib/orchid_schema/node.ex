@@ -4,12 +4,16 @@ defmodule OrchidSchema.Node do
 
   schema "nodes" do
     field :name, :string
-    field :address, :string
-    field :port, :integer
-    field :cluster_id, :integer
+    field :system_info, :map
 
     has_many :containers, OrchidSchema.Container
 
     timestamps()
+  end
+
+  def changeset(node, attrs) do
+    node
+    |> cast(attrs, [:name ])
+    |> validate_required([:name])
   end
 end

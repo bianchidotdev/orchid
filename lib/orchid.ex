@@ -7,4 +7,9 @@ defmodule Orchid do
   if it comes from the database, an external API or others.
   """
 
+  use Ash.Domain
+
+  resources do
+    resource Orchid.Resources.Deployment
+  end
 end

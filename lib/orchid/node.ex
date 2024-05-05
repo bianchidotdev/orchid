@@ -1,9 +1,30 @@
-defmodule Orchid.NodeManager do
+defmodule Orchid.Node do
   def get_nodes() do
     Node.list([:self, :connected])
+    |> Enum.map(&new/1)
   end
 
-  def fetch_system_info(node) do
+  def new(node) do
+    attrs = %{
+      name: node,
+      system_info: system_info(node)
+      # TODO: containers
+    }
+    %{}
+    |> OrchidSchema.Node.changeset(attrs)
+    |> Ecto.Changeset.apply_action(:insert)
+  end
+
+  def capable?(_node, _service) do
+    # TODO
+    true
+  end
+
+  def deploy_service(node, service) do
+    :rpc.call(node, Orchid.Service, :create_service, [service])
+  end
+
+  def system_info(node) do
     %{
       node: node,
       beam_info: Phoenix.LiveDashboard.SystemInfo.fetch_system_info(node, nil, Orchid),

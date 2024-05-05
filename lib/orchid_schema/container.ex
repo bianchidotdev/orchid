@@ -7,6 +7,7 @@ defmodule OrchidSchema.Container do
   @configurable_fields @required_fields ++ @optional_fields
 
   schema "containers" do
+    # service spec
     field :name, :string
     field :image, :string
     field :entrypoint, {:array, :string}
@@ -27,6 +28,8 @@ defmodule OrchidSchema.Container do
     # ephemeral fields
     field :container_id, :string, virtual: true
     field :state, :map, virtual: true
+
+    belongs_to :node, OrchidSchema.Node
   end
 
   def changeset(container, attrs) do
