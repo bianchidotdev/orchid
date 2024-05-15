@@ -1,6 +1,6 @@
 defmodule Orchid.Node do
   def get_nodes() do
-    Node.list([:self, :connected])
+    Node.list([:this, :connected])
     |> Enum.map(&new/1)
   end
 
@@ -10,7 +10,7 @@ defmodule Orchid.Node do
       system_info: system_info(node)
       # TODO: containers
     }
-    %{}
+    %OrchidSchema.Node{}
     |> OrchidSchema.Node.changeset(attrs)
     |> Ecto.Changeset.apply_action(:insert)
   end
