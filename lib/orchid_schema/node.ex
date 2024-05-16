@@ -20,20 +20,29 @@ defmodule OrchidSchema.Node do
   end
 
   defp calculate_fitness_score(changeset) do
-    # node = Ecto.Changeset.apply_changes(changeset)
-    # total_memory = Map.get(node.system_info, :total_memory)
-    # available_memory = Map.get(node.system_info, :available_memory)
-    # total_cpu = Map.get(node.system_info, :total_cpu)
-    # available_cpu = Map.get(node.system_info, :available_cpu)
+    node = Ecto.Changeset.apply_changes(changeset)
+    total_memory = get_in(node.system_info, [:system_memory, :total_memory])
+    free_memory = get_in(node.system_info, [:system_memory, :free_memory])
+    cpu_count = get_in(node.system_info, [:cpu_data, :count])
+    cpu_avg_15 = get_in(node.system_info, [:cpu_data, :avg15])
 
-    # # Calculate the fitness score as the average of the ratios of available memory and CPU to total memory and CPU,
-    # # adjusted by the resource usage of the containers.
-    # normalized_memory_usage = container_memory_usage / total_memory
-    # normalized_cpu_usage = container_cpu_usage / total_cpu
+    # sketch of the fitness score calculation
+    # 1 core = 33% max cpu score
+    # 2 cores = 60% max cpu score
+    # 8 cores = 88% max cpu score
+    # logarithmic scale to 1
+    normalized_cpu_usage = (1 - (1 / (0.5 + cpu_count))) * cpu_avg_15
+    # total memory usage
+    # 1GB = 33% max memory score
+    # 2GB = 60% max memory score
+    # 8GB = 88% max memory score
+    # memory score is crap since systems have less reported free memory
+    # than they actually have access to
+    memory_gb = total_memory / 1024 / 1024 / 1024
+    normalize_memory_usage = (1 - (1 / (0.5 + memory_gb))) * (free_memory / total_memory)
 
-    # # Prioritize systems with more overall capacity by adding the total memory and CPU to the score.
-    # score = (memory_score + cpu_score) / 2 + total_memory + total_cpu
-    # put_change(changeset, :score, score)
-    put_change(changeset, :score, 0)
+    # Prioritize systems with more overall capacity by adding the total memory and CPU to the score.
+    score = (normalize_memory_usage + normalized_cpu_usage) / 2
+    put_change(changeset, :score, score)
   end
 end
