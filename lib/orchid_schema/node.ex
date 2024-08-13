@@ -38,6 +38,7 @@ defmodule OrchidSchema.Node do
     # 8GB = 88% max memory score
     # memory score is crap since systems have less reported free memory
     # than they actually have access to
+    # I believe this causes the CPU score to have disproportionate weight
     memory_gb = total_memory / 1024 / 1024 / 1024
     normalize_memory_usage = (1 - (1 / (0.5 + memory_gb))) * (free_memory / total_memory)
 

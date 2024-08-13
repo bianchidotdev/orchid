@@ -7,6 +7,10 @@ defmodule Orchid.Scheduler do
     GenServer.start_link(__MODULE__, %{}, name: __MODULE__)
   end
 
+  def deploy_service(service) do
+    GenServer.call(__MODULE__, {:deploy_service, service})
+  end
+
   @impl true
   def init(_cluster_source) do
     # synchronously load the cluster to ensure it's configured properly
@@ -41,19 +45,55 @@ defmodule Orchid.Scheduler do
 
   end
 
+  # Pulls information from all nodes about fitness and running containers
+  # Considers all containers running a different deployment hash as old
+  # Pull image on all nodes that will run new containers
+  # Immediate fail if can’t pull the image
+  # Will first start new containers based on node fitness
+  # It will start all new containers before updating proxy information
+  # Validate health checks with manual requests (or rely on docker health checks?)
+  # Then post new application routing config to proxy containers
+  # Begin deleting old containers
+  # Do not delete old images unless specifically configured
   @impl true
-  def handle_info({:deploy_service, service}, state) do
+  # TODO: what type of method should this be?
+  def handle_call({:deploy_service, service}, _from, state) do
     Logger.info("Deploying services")
 
-    target_nodes = Orchid.Node.get_nodes()
+    all_nodes = Orchid.Node.get_nodes()
+    existing_service_containers = Enum.flat_map(all_nodes, fn node ->
+      Orchid.Node.exec(node, Orchid.Service, :get_service_containers, [service.name])
+    end)
+
+    target_nodes = all_nodes
     |> Enum.filter(&(Orchid.Node.capable?(&1, service)))
     |> Enum.sort_by(&(Map.get(&1, :score)), :desc)
     |> Stream.cycle()
     |> Stream.take(service.count)
 
-    Enum.map(target_nodes, fn node ->
-      Orchid.Node.deploy_service(node, service)
+    image_results = target_nodes
+    |> Enum.uniq()
+    |> Enum.map(fn node ->
+      Orchid.Node.exec(node, Orchid.Service, :pull_image, [service.image])
     end)
+
+    true = Enum.all?(image_results, fn {res, _} -> res == :ok end)
+
+    # TODO: perform in batches
+    container_results = Enum.map(target_nodes, fn node ->
+      Orchid.Node.exec(node, Orchid.Service, :deploy, [service])
+    end)
+
+    true = Enum.all?(container_results, fn {res, _} -> res == :ok end)
+    # TODO: health check?
+
+    # {:ok, _} = Orchid.Proxy.update_service(service)
+
+    container_cleanup_results = existing_service_containers
+    |> Enum.map(fn container ->
+      Orchid.Node.exec(container.node, Orchid.Service, :destroy_container, [container])
+    end)
+    true = Enum.all?(container_cleanup_results, fn {res, _} -> res == :ok end)
 
     {:noreply, state}
   end

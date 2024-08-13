@@ -1,6 +1,8 @@
 defmodule Orchid.Cluster do
   require Logger
 
+  alias Orchid.{Service,Source}
+
   # TODO: should we use static data layer and provide input from the system?
   # Or maybe the cluster data should be loaded and stored in ETS on startup,
   # but the service data should be queried from the controller?
@@ -72,34 +74,35 @@ defmodule Orchid.Cluster do
 #     |> Enum.to_list()
 #   end
 
-#   def load(source) do
-#     with {:ok, source_data} <- Source.fetch(source),
-#          {:ok, {cluster_config, service_configs}} <- Source.parse(source_data) do
-#       cluster =
-#         ClusterConfig.new(cluster_config)
-#         |> Map.put(:source, source)
+  def load(source) do
+    with {:ok, source_data} <- Source.fetch(source),
+         {:ok, {cluster_config, service_configs}} <- Source.parse(source_data) do
+      cluster =
+        new(cluster_config)
+        |> Map.put(:source, source)
 
-#       services =
-#         service_configs
-#         |> Enum.map(&Service.load(cluster, &1))
-#         |> Enum.filter(&ServiceConfig.valid?/1)
+      services =
+        service_configs
+        |> Enum.map(&Service.new/1)
+      # services =
+      #   service_configs
+      #   |> Enum.map(&Service.load(cluster, &1))
+      #   |> Enum.filter(&ServiceConfig.valid?/1)
 
-#       {:ok, {cluster, services}}
-#     else
-#       {:error, reason} -> {:error, reason}
-#     end
-#   end
+      {:ok, {cluster, services}}
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-#   def new(%{"version" => "v0.1", "spec" => spec}) do
-#     spec
-#     |> Enum.reduce(%__MODULE__{}, fn {k, v}, acc ->
-#       Map.put(acc, String.to_existing_atom(k), v)
-#     end)
-#   end
+  def new(%{"version" => "v0.1"} = cluster) do
+    cluster
+    |> Enum.reduce(%OrchidSchema.Cluster{}, fn {k, v}, acc ->
+      Map.put(acc, String.to_existing_atom(k), v)
+    end)
+  end
 
-#   def new(_), do: raise("Invalid cluster config, must have version and spec keys")
+  def new(_), do: raise("Invalid cluster config, must have version and spec keys")
 
 #   # TODO: validate
-# end
-
 end

@@ -11,6 +11,14 @@ defmodule Orchid.Service do
   #   end
   # end
 
+
+  def new(service) do
+    service
+      |> Enum.reduce(%OrchidSchema.Service{}, fn {k, v}, acc ->
+      Map.put(acc, String.to_existing_atom(k), v)
+    end)
+  end
+
   def create_service(%OrchidSchema.Service{} = service) do
     service.controller.create_service(service)
   end

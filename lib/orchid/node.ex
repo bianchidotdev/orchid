@@ -10,14 +10,19 @@ defmodule Orchid.Node do
       system_info: system_info(node)
       # TODO: containers
     }
-    %OrchidSchema.Node{}
+    {:ok, struct} = %OrchidSchema.Node{}
     |> OrchidSchema.Node.changeset(attrs)
     |> Ecto.Changeset.apply_action(:insert)
+    struct
   end
 
   def capable?(_node, _service) do
     # TODO
     true
+  end
+
+  def exec(node, module, function, args) do
+    :rpc.call(node, module, function, args)
   end
 
   def deploy_service(node, service) do
