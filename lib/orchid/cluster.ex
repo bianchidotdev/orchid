@@ -1,7 +1,7 @@
 defmodule Orchid.Cluster do
   require Logger
 
-  alias Orchid.{Service,Source}
+  alias Orchid.{Service, Source}
 
   # TODO: should we use static data layer and provide input from the system?
   # Or maybe the cluster data should be loaded and stored in ETS on startup,
@@ -27,7 +27,6 @@ defmodule Orchid.Cluster do
   # * destroy service resources triggering the dynamic workers
   # * stop dynamic supervisor for removed services
 
-
   # important events:
   # * upstream cluster config changes
   # * upstream service config changes
@@ -35,44 +34,44 @@ defmodule Orchid.Cluster do
   # * service unhealthy
   # * node lost
 
-# NOTE: I don't think we'll need these - cluster and service are just data structures that are fetchable when needed
-#   def create_cluster(cluster_config) do
-#     %OrchidSchema.Cluster{}
-#     |> OrchidSchema.Cluster.changeset(cluster_config)
-#     |> Ecto.Changeset.apply_action(:insert)
-#     # |> Orchid.Repo.insert()
-#     |> case do
-#       {:ok, cluster} -> {:ok, cluster}
-#       {:error, changeset} -> {:error, changeset}
-#     end
-#   end
+  # NOTE: I don't think we'll need these - cluster and service are just data structures that are fetchable when needed
+  #   def create_cluster(cluster_config) do
+  #     %OrchidSchema.Cluster{}
+  #     |> OrchidSchema.Cluster.changeset(cluster_config)
+  #     |> Ecto.Changeset.apply_action(:insert)
+  #     # |> Orchid.Repo.insert()
+  #     |> case do
+  #       {:ok, cluster} -> {:ok, cluster}
+  #       {:error, changeset} -> {:error, changeset}
+  #     end
+  #   end
 
-#   def update_cluster(cluster_config) do
-#     %OrchidSchema.Cluster{}
-#     |> OrchidSchema.Cluster.changeset(cluster_config)
-#     |> Ecto.Changeset.apply_action(:update)
-#     # |> Orchid.Repo.update()
-#     |> case do
-#       {:ok, cluster} -> {:ok, cluster}
-#       {:error, changeset} -> {:error, changeset}
-#     end
-#   end
-# end
+  #   def update_cluster(cluster_config) do
+  #     %OrchidSchema.Cluster{}
+  #     |> OrchidSchema.Cluster.changeset(cluster_config)
+  #     |> Ecto.Changeset.apply_action(:update)
+  #     # |> Orchid.Repo.update()
+  #     |> case do
+  #       {:ok, cluster} -> {:ok, cluster}
+  #       {:error, changeset} -> {:error, changeset}
+  #     end
+  #   end
+  # end
 
-# NOTE: old hand-rolled cluster config loading - now using ecto schemas
-#   def sync() do
-#     # TODO: fix this way up
-#     source = %Source{
-#       type: Application.get_env(:orchid, :cluster_config_source_type),
-#       url: Application.get_env(:orchid, :cluster_config_source_url)
-#     }
+  # NOTE: old hand-rolled cluster config loading - now using ecto schemas
+  #   def sync() do
+  #     # TODO: fix this way up
+  #     source = %Source{
+  #       type: Application.get_env(:orchid, :cluster_config_source_type),
+  #       url: Application.get_env(:orchid, :cluster_config_source_url)
+  #     }
 
-#     {:ok, {cluster, services}} = load(source)
+  #     {:ok, {cluster, services}} = load(source)
 
-#     # TODO: switch to a dynamic supervisor
-#     Task.async_stream(services, &Service.sync(&1))
-#     |> Enum.to_list()
-#   end
+  #     # TODO: switch to a dynamic supervisor
+  #     Task.async_stream(services, &Service.sync(&1))
+  #     |> Enum.to_list()
+  #   end
 
   def load(source) do
     with {:ok, source_data} <- Source.fetch(source),
@@ -84,6 +83,8 @@ defmodule Orchid.Cluster do
       services =
         service_configs
         |> Enum.map(&Service.new/1)
+
+      # TODO: load additional service configs
       # services =
       #   service_configs
       #   |> Enum.map(&Service.load(cluster, &1))
@@ -104,5 +105,5 @@ defmodule Orchid.Cluster do
 
   def new(_), do: raise("Invalid cluster config, must have version and spec keys")
 
-#   # TODO: validate
+  #   # TODO: validate
 end

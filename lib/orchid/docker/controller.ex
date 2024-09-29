@@ -9,11 +9,17 @@ defmodule Orchid.Docker.Controller do
   end
 
   # TODO: figure out interface - this can and will run multiple containers
-  def create_service(config) do
+  def create(config) do
     # TODO: probably do some parsing and mutations here to get docker specific config
     with {:ok, _} <- Controller.Image.create_image(config.image),
-         {:ok, resp} <- Controller.Container.create(config) do
-      {:ok, resp}
+         {:ok, resp} <- Controller.Container.create(config),
+         {:ok, config} <-
+           OrchidSchema.Container.runtime_changeset(config, %{container_id: resp.body["Id"]})
+           |> Ecto.Changeset.apply_action(:insert),
+         {:ok, _} <- Controller.Container.start(config.container_id) do
+      # OrchidSchema.Container.changeset(config, %{container_id: resp.body["Id"]})
+      # |> Ecto.Changeset.apply_action(:insert)
+      {:ok, config}
     else
       err -> err
     end
@@ -24,10 +30,14 @@ defmodule Orchid.Docker.Controller do
     Controller.Container.list_all(filters: %{label: ["orchid.service=#{name}"]})
   end
 
+  def pull_image(image_reference) do
+    Controller.Image.create_image(image_reference)
+  end
+
   def client() do
     # TODO: make configurable
-    # Req.new(base_url: "http://oci", unix_socket: "/var/run/docker.sock")
-    Req.new(base_url: "http://localhost:2376")
+    Req.new(base_url: "http://docker.example.com", unix_socket: "/var/run/docker.sock")
+    # Req.new(base_url: "http://localhost:2376")
     |> Req.Request.append_response_steps(
       decode_multiplexed_stream: &decode_vnd_docker_multiplexed_stream/1
     )

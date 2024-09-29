@@ -22,11 +22,11 @@ defmodule Orchid.Node do
   end
 
   def exec(node, module, function, args) do
-    :rpc.call(node, module, function, args)
+    :rpc.call(node.name, module, function, args)
   end
 
   def deploy_service(node, service) do
-    :rpc.call(node, Orchid.Service, :create_service, [service])
+    :rpc.call(node.name, Orchid.Service, :create_service, [service])
   end
 
   def system_info(node) do

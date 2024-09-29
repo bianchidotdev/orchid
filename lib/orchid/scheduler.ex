@@ -42,7 +42,6 @@ defmodule Orchid.Scheduler do
   def handle_info(:sync_services, _state) do
     Logger.info("Syncing services")
     # triggers deployments
-
   end
 
   # Pulls information from all nodes about fitness and running containers
@@ -61,38 +60,48 @@ defmodule Orchid.Scheduler do
     Logger.info("Deploying services")
 
     all_nodes = Orchid.Node.get_nodes()
-    existing_service_containers = Enum.flat_map(all_nodes, fn node ->
-      Orchid.Node.exec(node, Orchid.Service, :get_service_containers, [service.name])
-    end)
 
-    target_nodes = all_nodes
-    |> Enum.filter(&(Orchid.Node.capable?(&1, service)))
-    |> Enum.sort_by(&(Map.get(&1, :score)), :desc)
-    |> Stream.cycle()
-    |> Stream.take(service.count)
+    existing_service_containers =
+      Enum.flat_map(all_nodes, fn node ->
+        Orchid.Node.exec(node, Orchid.Service, :get_service, [service])
+      end)
 
-    image_results = target_nodes
-    |> Enum.uniq()
-    |> Enum.map(fn node ->
-      Orchid.Node.exec(node, Orchid.Service, :pull_image, [service.image])
-    end)
+    target_nodes =
+      all_nodes
+      |> Enum.filter(&Orchid.Node.capable?(&1, service))
+      |> Enum.sort_by(&Map.get(&1, :score), :desc)
+      |> Stream.cycle()
+      |> Stream.take(service.count)
 
-    true = Enum.all?(image_results, fn {res, _} -> res == :ok end)
+    # Presently implemented in create_service
+    # image_results =
+    #   target_nodes
+    #   |> Enum.uniq()
+    #   |> Enum.map(fn node ->
+    #     Orchid.Node.exec(node, Orchid.Service, :pull_images, [service])
+    #   end)
+
+    # true = Enum.all?(image_results, fn {res, _} -> res == :ok end)
 
     # TODO: perform in batches
-    container_results = Enum.map(target_nodes, fn node ->
-      Orchid.Node.exec(node, Orchid.Service, :deploy, [service])
-    end)
+    container_results =
+      Enum.map(target_nodes, fn node ->
+        Orchid.Node.exec(node, Orchid.Service, :create_service, [service])
+      end)
+
+    dbg()
 
     true = Enum.all?(container_results, fn {res, _} -> res == :ok end)
     # TODO: health check?
 
     # {:ok, _} = Orchid.Proxy.update_service(service)
 
-    container_cleanup_results = existing_service_containers
-    |> Enum.map(fn container ->
-      Orchid.Node.exec(container.node, Orchid.Service, :destroy_container, [container])
-    end)
+    container_cleanup_results =
+      existing_service_containers
+      |> Enum.map(fn container ->
+        Orchid.Node.exec(container.node, Orchid.Service, :destroy_container, [container])
+      end)
+
     true = Enum.all?(container_cleanup_results, fn {res, _} -> res == :ok end)
 
     {:noreply, state}

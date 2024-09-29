@@ -11,16 +11,60 @@ defmodule Orchid.Service do
   #   end
   # end
 
-
   def new(service) do
+    {:ok, service} =
+      %OrchidSchema.Service{}
+      |> OrchidSchema.Service.changeset(service)
+      |> Ecto.Changeset.apply_action(:insert)
+
     service
-      |> Enum.reduce(%OrchidSchema.Service{}, fn {k, v}, acc ->
-      Map.put(acc, String.to_existing_atom(k), v)
-    end)
+
+    # service
+    # |> Enum.reduce(%OrchidSchema.Service{}, fn {k, v}, acc ->
+    #   Map.put(acc, String.to_existing_atom(k), v)
+    # end)
+  end
+
+  def get_service(%OrchidSchema.Service{} = service) do
+    service.controller.get_service(service)
   end
 
   def create_service(%OrchidSchema.Service{} = service) do
-    service.controller.create_service(service)
+    containers =
+      Enum.map(service.containers, fn container ->
+        {:ok, container} = service.controller.create(container)
+        container
+      end)
+
+    dbg()
+
+    {:ok, service} =
+      service
+      |> Ecto.Changeset.change()
+      |> Ecto.Changeset.put_assoc(:containers, containers)
+      |> Ecto.Changeset.apply_action(:update)
+
+    [container] = containers
+    {service, container}
+  end
+
+  def pull_images(%OrchidSchema.Service{} = service) do
+    # TODO: convert container into struct
+    results =
+      Enum.map(service.containers, fn container ->
+        service.controller.pull_image(container["image"])
+      end)
+
+    dbg()
+
+    if Enum.all?(results, fn
+         {:ok, _} -> true
+         {:error, _} -> false
+       end) do
+      {:ok, "Images pulled"}
+    else
+      {:error, "Failed to pull images"}
+    end
   end
 
   # def sync(%{} = service) do
@@ -37,8 +81,6 @@ defmodule Orchid.Service do
   #     {:error, reason} -> {:error, reason}
   #   end
   # end
-
-
 
   # def update_service(config, current) do
   #   {:ok, diffs} = Orchid.Models.ServiceConfig.diff(config, current)

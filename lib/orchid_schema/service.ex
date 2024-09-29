@@ -3,9 +3,14 @@ defmodule OrchidSchema.Service do
   import Ecto.Changeset
 
   schema "services" do
-    field :name, :string
-    field :count, :integer, default: 1
-    field :controller, Ecto.Enum, values: [Orchid.Docker.Controller], default: Orchid.Docker.Controller
+    field(:name, :string)
+    field(:count, :integer, default: 1)
+    # TODO: add type of replica or daemon (maybe new names)
+
+    field(:controller, Ecto.Enum,
+      values: [Orchid.Docker.Controller],
+      default: Orchid.Docker.Controller
+    )
 
     has_many :containers, OrchidSchema.Container
   end
@@ -13,6 +18,13 @@ defmodule OrchidSchema.Service do
   def changeset(service, attrs) do
     service
     |> cast(attrs, [:name, :count, :controller])
+    |> cast_assoc(:containers)
     |> validate_required([:name, :controller])
+  end
+
+  def containers_changeset(service, containers) do
+    service
+    |> change()
+    |> put_assoc(:containers, containers)
   end
 end
