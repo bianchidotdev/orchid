@@ -8,7 +8,7 @@ defmodule Orchid.Scheduler do
   end
 
   def deploy_service(service) do
-    GenServer.call(__MODULE__, {:deploy_service, service})
+    GenServer.call(__MODULE__, {:deploy_service, service}, 30_000)
   end
 
   @impl true

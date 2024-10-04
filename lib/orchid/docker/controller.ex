@@ -13,6 +13,7 @@ defmodule Orchid.Docker.Controller do
     # TODO: probably do some parsing and mutations here to get docker specific config
     with {:ok, _} <- Controller.Image.create_image(config.image),
          {:ok, resp} <- Controller.Container.create(config),
+         # TODO: this should not be necessary
          {:ok, config} <-
            OrchidSchema.Container.runtime_changeset(config, %{container_id: resp.body["Id"]})
            |> Ecto.Changeset.apply_action(:insert),

@@ -12,19 +12,19 @@ defmodule OrchidSchema.Service do
       default: Orchid.Docker.Controller
     )
 
-    has_many :containers, OrchidSchema.Container
+    embeds_many(:containers, OrchidSchema.Container)
   end
 
   def changeset(service, attrs) do
     service
     |> cast(attrs, [:name, :count, :controller])
-    |> cast_assoc(:containers)
+    |> cast_embed(:containers)
     |> validate_required([:name, :controller])
   end
 
-  def containers_changeset(service, containers) do
+  def runtime_changeset(service, attrs) do
     service
-    |> change()
-    |> put_assoc(:containers, containers)
+    |> cast(attrs, [])
+    |> cast_embed(:containers, with: &OrchidSchema.Container.runtime_changeset/2)
   end
 end

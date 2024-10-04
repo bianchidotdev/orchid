@@ -39,13 +39,13 @@ defmodule OrchidSchema.Container do
   def changeset(container, attrs) do
     container
     |> cast(attrs, @configurable_fields)
-    # TODO: embed state
-    # |> cast_embed(:state)
     |> validate_required(@required_fields)
   end
 
   def runtime_changeset(container, attrs) do
     container
+    # TODO: embed state
+    # |> cast_embed(:state)
     |> cast(attrs, @runtime_fields)
   end
 
