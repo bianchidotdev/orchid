@@ -1,5 +1,8 @@
 # Orchid
 
+> [!WARNING]  
+> This repository is now archived. I'm personally using a more manual setup using [cayo](https://github.com/ublue-os/cayo) or [kamal](https://github.com/basecamp/kamal)
+
 ![Orchid Image](orchid-img.png)
 
 ## TODO
